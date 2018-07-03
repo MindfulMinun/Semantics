@@ -3,23 +3,24 @@
  * coffee -o dist/ -cw src/
 ###
 
-#! The Semantics constructor function
-Semantics = ->
-    @$values = {}
-    @$plurals = {}
-    @$options = {
-        escapeHTML: yes
-    }
-    Semantics::add.apply this, arguments
-    return
+#! The Semantics class
+class Semantics
+    constructor: ->
+        @values = {}
+        @plurals = {}
+        @options = {
+            escapeHTML: yes
+        }
+        Semantics::add.apply this, arguments
+
 
 #! ========================================
 #! Helpers
 Semantics.deepVal = (obj, path) ->
     #! Given an object and path as a string (ex, "foo/bar/baz"),
     #! return that object's property. (ex, obj.foo.bar.baz)
-    path = path.replace /^\//, '' # Removes the beginning slash in the path
-    path = path.replace /\/$/, '' # Removes the trailing slash in the path
+    # Removes the beginning/ending slashes in the path
+    path = path.replace /(^\/)|(\/$)/, ''
     path = path.split '/'
     l = path.length
     for folder in path
@@ -33,44 +34,39 @@ Semantics.deepVal = (obj, path) ->
 #! Prototype
 Semantics::get = (path, args...) ->
     #! Returns the translation at `path`
-    translation = Semantics.deepVal(@$values, path)
+    translation = Semantics.deepVal(@values, path)
     if typeof translation is "function"
         translation(args...)
     else
         translation
 
-Semantics::pluralize = (quantity, key, args...) ->
+Semantics::plural = (quantity, key, args...) ->
     #! Add plural rules
-    if typeof @$plurals[key] is "function"
-        @$plurals[key](quantity, args...)
-    else if typeof @$values[key] isnt "undefined"
-        @$plurals[key]
+    if typeof @plurals[key] is "function"
+        @plurals[key](quantity, args...)
+    else if typeof @values[key] isnt "undefined"
+        @plurals[key]
     else
         null
 
-Semantics::add = (translations) ->
+Semantics::add = (translations = {}) ->
     #! Add translations
     for key, val of translations['values']
-        if @$values[key]
-            console.log "Translation “#{key}” already defined as
-                “#{@$values[key]}”, replacing with “#{val}”."
-        @$values[key] = val
+        @values[key] = val
 
+    #! Add plural rules
     for key, val of translations['plurals']
-        if @$plurals[key]
-            console.log "Plural rule “#{key}” already defined as
-                “#{@$plurals[key]}”, replacing with “#{val}”."
-        @$plurals[key] = val
-    return @
+        @plurals[key] = val
+    this
 
 Semantics::setOption = (setting, value) ->
-    if @$options[setting]? then @$options[setting] = value
+    if @options[setting]? then @options[setting] = value
 
 #! ========================================
 #! Export
-if module?.exports?
-    #! Probably node
-    module.exports = Semantics
-else
+if this is window?
     #! Probably browser
     window["Semantics"] = Semantics
+else
+    #! Probably node
+    module.exports = Semantics
