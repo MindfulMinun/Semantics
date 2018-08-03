@@ -4,12 +4,18 @@
     "description": "A simple yet powerful i18n library for JavaScript.",
     "main": "dist/main.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "mocha --require coffeescript/register --compilers coffee:coffeescript/register",
         "start": "node dist/main.js"
     },
     "keywords": [
         "i18n"
     ],
     "author": "MindfulMinun",
-    "license": "MIT"
+    "license": "MIT",
+    "repository": "github:MindfulMinun/Semantics",
+    "devDependencies": {
+        "chai": "^4.1.2",
+        "coffeescript": "^2.3.1",
+        "mocha": "^5.2.0"
+    }
 }

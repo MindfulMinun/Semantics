@@ -14,6 +14,8 @@
 
 Semantics is a simple yet powerful i18n library for JavaScript, built for both Node and the web.
 
+> **Note:** Semantics is in v0; it should not be considered stable.
+
 ## Installation
 
 ### Node

@@ -1,66 +1,35 @@
-###
- * To compile, install coffeescript and run the following command:
- * coffee -o dist/ -cw src/
-###
+# ========================================
+# Class Semantics
+class Semantics extends Function
+    constructor: (defaultLang, dictionaries) ->
+        #! `this` is the bound function
+        #! Let this.me = bound, or `this.me = this`
+        #! Workaround for `this` to be called properly
+        super("return this.get.apply(this.me, arguments)")
+        bound = @bind @
+        [bound.me, @me, bound.translations] = [bound, bound, {}]
+        bound.lang = (
+            if typeof defaultLang is "string" then defaultLang else "en"
+        )
 
-#! The Semantics class
-class Semantics
-    constructor: ->
-        @values = {}
-        @plurals = {}
-        @options = {
-            escapeHTML: yes
-        }
-        Semantics::add.apply this, arguments
+        Semantics::add.call bound, dictionaries
+        Object.setPrototypeOf(bound, Semantics::)
+        return bound
 
+    get: (key, args...) ->
+        key = String key
+        h = @translations[@lang]?[key]
+        switch
+            when not h? then throw Error "Key “#{key}” not found
+                in language “#{@lang}”."
+            when typeof h is "function" then h(args...)
+            else h
 
-#! ========================================
-#! Helpers
-Semantics.deepVal = (obj, path) ->
-    #! Given an object and path as a string (ex, "foo/bar/baz"),
-    #! return that object's property. (ex, obj.foo.bar.baz)
-    # Removes the beginning/ending slashes in the path
-    path = path.replace /(^\/)|(\/$)/, ''
-    path = path.split '/'
-    l = path.length
-    for folder in path
-        try
-            obj = obj[folder]
-        catch
-            return undefined
-    return obj
+    add: (dictionaries) ->
+        @translations = Object.assign @translations, dictionaries
+        @
 
-#! ========================================
-#! Prototype
-Semantics::get = (path, args...) ->
-    #! Returns the translation at `path`
-    translation = Semantics.deepVal(@values, path)
-    if typeof translation is "function"
-        translation(args...)
-    else
-        translation
-
-Semantics::plural = (quantity, key, args...) ->
-    #! Add plural rules
-    if typeof @plurals[key] is "function"
-        @plurals[key](quantity, args...)
-    else if typeof @values[key] isnt "undefined"
-        @plurals[key]
-    else
-        null
-
-Semantics::add = (translations = {}) ->
-    #! Add translations
-    for key, val of translations['values']
-        @values[key] = val
-
-    #! Add plural rules
-    for key, val of translations['plurals']
-        @plurals[key] = val
-    this
-
-Semantics::setOption = (setting, value) ->
-    if @options[setting]? then @options[setting] = value
+    setLanguage: (@lang) ->
 
 #! ========================================
 #! Export
